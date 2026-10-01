@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор сушки глины — АО «Севералмаз»</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-page: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --danger: #ef4444;
+            --success: #10b981;
+            --font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-page);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            gap: 10px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .font-mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Header Bar */
+        header {
+            background: linear-gradient(135deg, #0369a1 0%, #1e1b4b 100%);
+            color: #ffffff;
+            padding: 10px 16px;
+            border-radius: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand-badge {
+            background-color: #f59e0b;
+            color: #0f172a;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title-box h1 {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .header-title-box p {
+            font-size: 11px;
+            color: #bae6fd;
+            font-weight: 500;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            border: none;
+            outline: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-light {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-light:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .preset-group {
+            background-color: rgba(0, 0, 0, 0.25);
+            padding: 3px;
+            border-radius: 8px;
+            display: flex;
+            gap: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-preset {
+            padding: 5px 10px;
+            font-size: 11px;
+            border-radius: 6px;
+            background: transparent;
+            color: #e0f2fe;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .btn-preset.active {
+            background-color: #f59e0b;
+            color: #0f172a;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        main.dashboard {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 900px) {
+            main.dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #334155;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        .status-badge.active {
+            background-color: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .status-badge.complete {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+
+        /* Canvas Viewport */
+        .canvas-viewport {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            min-height: 240px;
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 8px;
+            border: 1px solid #334155;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas#clayCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: default;
+        }
+
+        canvas#clayCanvas.painting-cursor {
+            cursor: crosshair;
+        }
+
+        .overlay-alert {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(239, 68, 68, 0.95);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #f87171;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .overlay-mode {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(30, 27, 75, 0.9);
+            color: #c7d2fe;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #6366f1;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .drawing-palette {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.96);
+            border: 1px solid #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 0 1px #cbd5e1;
+            cursor: pointer;
+        }
+
+        .color-dot.selected {
+            box-shadow: 0 0 0 2px #0284c7;
+            transform: scale(1.1);
+        }
+
+        /* Success Overlay */
+        .success-modal-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            text-align: center;
+            z-index: 30;
+        }
+
+        .success-modal-overlay h3 {
+            font-size: 18px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-top: 6px;
+        }
+
+        .success-modal-overlay p {
+            font-size: 13px;
+            color: #475569;
+            margin: 6px 0 14px 0;
+        }
+
+        .live-timer-banner {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timer-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .timer-value {
+            font-size: 22px;
+            font-weight: 900;
+            color: #d97706;
+        }
+
+        .timer-value-est {
+            font-size: 18px;
+            font-weight: 900;
+            color: #0284c7;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .metric-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 6px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 56px;
+        }
+
+        .metric-title {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .metric-val {
+            font-size: 13px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-top: 3px;
+        }
+
+        /* Inputs & Sliders */
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .slider-val-tag {
+            font-size: 11px;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #cbd5e1;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0284c7;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+
+        /* Action Buttons Grid */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #d97706 0%, #c2410c 100%);
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* Speed Control Bar */
+        .speed-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 6px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 11px;
+        }
+
+        .speed-btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-spd {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: 800;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-spd.active {
+            background-color: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+        }
+
+        /* Chart Card */
+        .chart-box {
+            position: relative;
+            width: 100%;
+            height: 140px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        canvas#miniChartCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Footer Banner */
+        footer.fun-footer {
+            background: linear-gradient(135deg, #312e81 0%, #0f172a 100%);
+            color: #ffffff;
+            padding: 10px 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            border: 1px solid #4338ca;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 620px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        @media (max-width: 500px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-item {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .modal-item:hover {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+        }
+
+        .modal-item-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #0369a1;
+            margin-bottom: 4px;
+        }
+
+        .modal-item-desc {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="brand-badge">АО «СЕВЕРАЛМАЗ»</div>
+            <div class="header-title-box">
+                <h1>Симулятор сушки глины</h1>
+                <p>Ломоносовский ГОК • Лабораторно-производственный комплекс</p>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <button onclick="openApplicationsModal()" class="btn btn-light">
+                <span>💡</span>
+                <span>Применение глины</span>
+            </button>
+
+            <div class="preset-group">
+                <button id="presetGokBtn" onclick="applyPreset('gok')" class="btn-preset active">
+                    🏢 ГОК (32% → 7%)
+                </button>
+                <button id="presetSchoolBtn" onclick="applyPreset('school')" class="btn-preset">
+                    🧪 Опыт (25% → 5%)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard">
+
+        <!-- LEFT SECTION: Visualizer -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🔬</span>
+                    <span>Визуализация процесса сушки</span>
+                </div>
+                <span id="statusBadge" class="status-badge">Готов к запуску</span>
+            </div>
+
+            <!-- Canvas Viewport -->
+            <div class="canvas-viewport" id="viewportBg">
+                <canvas id="clayCanvas"></canvas>
+
+                <!-- Alerts & Badges -->
+                <div id="tempWarning" class="overlay-alert hidden">
+                    ⚠ Превышена норма ГОСТ (105°C)!
+                </div>
+
+                <div id="funScenarioBadge" class="overlay-mode hidden">
+                    <span id="funScenarioTitle">Режим: Нормальный</span>
+                    <button onclick="resetFunScenario()" style="background:none; border:none; color:#ffffff; cursor:pointer; font-weight:bold; margin-left:4px;" title="Сбросить режим">✕</button>
+                </div>
+
+                <!-- Palette for drawing mode -->
+                <div id="drawingPalette" class="drawing-palette hidden">
+                    <span style="font-size: 11px; font-weight: 800; color: #4c1d95;">🎨 Цвета:</span>
+                    <div onclick="setPaintColor('#b91c1c')" id="colorDotRed" class="color-dot selected" style="background-color: #b91c1c;" title="Красная охра"></div>
+                    <div onclick="setPaintColor('#1e40af')" id="colorDotBlue" class="color-dot" style="background-color: #1e40af;" title="Кобальт синий"></div>
+                    <div onclick="setPaintColor('#15803d')" id="colorDotGreen" class="color-dot" style="background-color: #15803d;" title="Зеленый пигмент"></div>
+                    <div onclick="setPaintColor('#0f172a')" id="colorDotBlack" class="color-dot" style="background-color: #0f172a;" title="Черный графит"></div>
+                    <div onclick="setPaintColor('#ffffff')" id="colorDotWhite" class="color-dot" style="background-color: #ffffff;" title="Белый каолин"></div>
+                    <button onclick="clearDrawing()" class="btn btn-secondary" style="padding: 3px 8px; font-size: 10px; font-weight: 700;">Очистить</button>
+                </div>
+
+                <!-- Completion overlay -->
+                <div id="successOverlay" class="success-modal-overlay hidden">
+                    <div style="font-size: 36px;">🎉</div>
+                    <h3>Процесс сушки завершен!</h3>
+                    <p>Целевая влажность успешно достигнута за <span id="finalTimeText" style="color:#10b981; font-weight:900;">18.5 мин</span>.</p>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="openApplicationsModal()" class="btn btn-primary" style="font-size: 11px;">💡 Области применения</button>
+                        <button onclick="resetSimulation()" class="btn btn-secondary" style="font-size: 11px;">🔄 Начать заново</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Indicator -->
+            <div class="live-timer-banner">
+                <div>
+                    <div class="timer-label">Время в симуляции</div>
+                    <div id="mainTimeDisplay" class="timer-value font-mono">00:00 <span style="font-size:12px; color:#64748b;">мин</span></div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="timer-label">Расчетное время</div>
+                    <div id="calcEstimatedTime" class="timer-value-est font-mono">~18.5 мин</div>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-title">Испарено воды</div>
+                    <div id="statWaterEvaporated" class="metric-val font-mono" style="color: #0284c7;">0.0 г</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Текущая масса</div>
+                    <div id="statCurrentMass" class="metric-val font-mono">500.0 г</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Темп. глины</div>
+                    <div id="clayTempText" class="metric-val font-mono" style="color: #d97706;">20.0 °C</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Скорость</div>
+                    <div id="clayEvapSpeedText" class="metric-val font-mono" style="color: #4f46e5;">0.0 г/мин</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Состояние</div>
+                    <div id="clayStateText" class="metric-val" style="color: #0284c7; font-size: 11px;">Влажная (32%)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT SECTION: Sliders & Chart -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>⚙️</span>
+                    <span>Параметры эксперимента</span>
+                </div>
+                <span style="font-size: 10px; color: #94a3b8; font-weight: 700;">ГОСТ 21216-2014</span>
+            </div>
+
+            <!-- Sliders -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>💧 Начальная влажность</span>
+                        <span id="valW1" class="slider-val-tag font-mono">32 %</span>
+                    </div>
+                    <input type="range" id="inputW1" min="15" max="45" value="32" step="1" oninput="onInputChange()">
+                    <div class="slider-ticks">
+                        <span>15%</span>
+                        <span style="color:#0284c7;">32% (Кек ГОКа)</span>
+                        <span>45%</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>🎯 Конечная влажность</span>
+                        <span id="valW2" class="slider-val-tag font-mono" style="background:#d1fae5; color:#065f46; border-color:#a7f3d0;">7 %</span>
+                    </div>
+                    <input type="range" id="inputW2" min="2" max="20" value="7" step="1" oninput="onInputChange()">
+                    <div class="slider-ticks">
+                        <span>2%</span>
+                        <span style="color:#059669;">7% (Целевая)</span>
+                        <span>20%</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>🔥 Температура нагрева</span>
+                        <span id="valTemp" class="slider-val-tag font-mono" style="background:#fef3c7; color:#92400e; border-color:#fde68a;">95 °C</span>
+                    </div>
+                    <input type="range" id="inputTemp" min="40" max="115" value="95" step="1" oninput="onInputChange()">
+                    <div class="slider-ticks">
+                        <span>40°C</span>
+                        <span style="color:#d97706;">95°C (Сушилка)</span>
+                        <span>105°C (ГОСТ)</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>⚖️ Масса образца</span>
+                        <span id="valMass" class="slider-val-tag font-mono" style="background:#f3e8ff; color:#6b21a8; border-color:#e9d5ff;">500 г</span>
+                    </div>
+                    <input type="range" id="inputMass" min="100" max="2000" value="500" step="50" oninput="onInputChange()">
+                    <div class="slider-ticks">
+                        <span>100 г</span>
+                        <span>500 г</span>
+                        <span>2000 г</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-grid">
+                <button id="btnToggle" onclick="toggleSimulation()" class="btn btn-primary" style="padding: 10px;">
+                    <span id="btnIcon">▶️</span>
+                    <span id="btnText">Запустить сушку</span>
+                </button>
+                <button onclick="resetSimulation()" class="btn btn-secondary">
+                    🔄 Сброс
+                </button>
+            </div>
+
+            <div class="speed-bar">
+                <span id="speedIndicator" style="font-weight: 800; color: #334155;">Скорость: 1x</span>
+                <div class="speed-btn-group">
+                    <button onclick="setSpeed(1)" class="btn-spd active">1x</button>
+                    <button onclick="setSpeed(5)" class="btn-spd">5x</button>
+                    <button onclick="setSpeed(15)" class="btn-spd">15x</button>
+                    <button onclick="setSpeed(60)" class="btn-spd">60x</button>
+                </div>
+            </div>
+
+            <!-- Dynamic Graph -->
+            <div style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1;">
+                <div class="card-title" style="font-size: 11px;">
+                    <span>📈 График динамики влажности W(t)</span>
+                </div>
+                <div class="chart-box">
+                    <canvas id="miniChartCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="fun-footer">
+        <div>
+            <div style="font-size: 12px; font-weight: 900; color: #fde047; text-transform: uppercase;">🚀 «А что если...» — Экстремальные условия сушки</div>
+            <div style="font-size: 11px; color: #c7d2fe; margin-top: 2px;">Испытайте сапонитовую глину АО «Севералмаз» в вакууме Луны, в жерле вулкана, на Солнце, в Антарктиде или в режиме росписи ангобами!</div>
+        </div>
+        <button onclick="openFunModal()" class="btn" style="background-color: #facc15; color: #0f172a; font-weight: 900;">
+            ✨ Выбрать режим
+        </button>
+    </footer>
+
+    <!-- MODAL 1: Extreme Scenarios -->
+    <div id="funModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="font-size: 14px; font-weight: 900; color: #312e81;">🚀 Экстремальные и Космические опыты</h3>
+                <button onclick="closeFunModal()" style="background:none; border:none; font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-grid">
+                <div onclick="selectFunScenario('moon')" class="modal-item">
+                    <div class="modal-item-title">1. На Луне (Вакуум)</div>
+                    <div class="modal-item-desc">Мгновенное кипение и взрывное испарение воды в условиях лунного безвоздушного пространства.</div>
+                </div>
+                <div onclick="selectFunScenario('sun')" class="modal-item">
+                    <div class="modal-item-title">2. Поверхность Солнца</div>
+                    <div class="modal-item-desc">5 500 °C! Глина за долю секунды ионизируется в раскаленную солнечную плазму.</div>
+                </div>
+                <div onclick="selectFunScenario('volcano')" class="modal-item">
+                    <div class="modal-item-title">3. В жерле вулкана</div>
+                    <div class="modal-item-desc">1 200 °C! Моментальный пирогенный обжиг образца в монолитную керамику.</div>
+                </div>
+                <div onclick="selectFunScenario('antarctica')" class="modal-item">
+                    <div class="modal-item-title">4. В Антарктиде (-89°C)</div>
+                    <div class="modal-item-desc">Кристаллизация и замерзание воды. Сверхмедленный процесс сублимации изо льда в пар.</div>
+                </div>
+                <div onclick="selectFunScenario('microwave')" class="modal-item">
+                    <div class="modal-item-title">5. Супер-СВЧ (10 кВт)</div>
+                    <div class="modal-item-desc">Объемный нагрев высокочастотным полем, вскипание воды изнутри комка.</div>
+                </div>
+                <div onclick="selectFunScenario('drawing')" class="modal-item" style="border-color:#c084fc; background:#faf5ff;">
+                    <div class="modal-item-title" style="color:#7e22ce;">🎨 6. Роспись на глине</div>
+                    <div class="modal-item-desc">Интерактивный режим: нанесение минеральных ангобов на поверхность высохшего образца.</div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <button onclick="closeFunModal()" class="btn btn-secondary">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Applications -->
+    <div id="applicationsModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size: 14px; font-weight: 900; color: #0369a1;">🏭 Промышленное применение глины</h3>
+                    <p style="font-size: 11px; color: #64748b;">Сапонитовые глины месторождения им. М.В. Ломоносова (АО «Севералмаз»)</p>
+                </div>
+                <button onclick="closeApplicationsModal()" style="background:none; border:none; font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-grid">
+                <div class="modal-item">
+                    <div class="modal-item-title">🏗️ 1. Строительство</div>
+                    <div class="modal-item-desc">Производство керамического кирпича, керамзита, высокопрочных цементов и добавок.</div>
+                </div>
+                <div class="modal-item">
+                    <div class="modal-item-title">🌾 2. Сельское хозяйство</div>
+                    <div class="modal-item-desc">Раскисление кислых почв, удержание влаги в засушливых регионах, минеральные кормовые добавки (Mg, Ca, Fe).</div>
+                </div>
+                <div class="modal-item">
+                    <div class="modal-item-title">💊 3. Медицина и фармация</div>
+                    <div class="modal-item-desc">Природный энтеросорбент для выведения токсинов и тяжелых металлов, основа целебных мазей.</div>
+                </div>
+                <div class="modal-item">
+                    <div class="modal-item-title">💄 4. Косметология</div>
+                    <div class="modal-item-desc">Минеральные маски для лица, СПА-обертывания, очищающие скрабы и абсорбенты.</div>
+                </div>
+                <div class="modal-item">
+                    <div class="modal-item-title">🌿 5. Экология</div>
+                    <div class="modal-item-desc">Очистка сточных вод промышленных предприятий, фильтрация нефтепродуктов и рекультивация карьеров.</div>
+                </div>
+                <div class="modal-item">
+                    <div class="modal-item-title">🛢️ 6. Нефтегазовая отрасль</div>
+                    <div class="modal-item-desc">Компонент буровых растворов для смазки и охлаждения долот, укрепление стенок скважин.</div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <button onclick="closeApplicationsModal()" class="btn btn-primary">Понятно</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isRunning = false;
+        let animationFrameId = null;
+        let simTimeMinutes = 0;
+        let speedMultiplier = 1;
+        let activeFunScenario = null;
+
+        // Painting state
+        let paintedStrokes = [];
+        let currentBrushColor = '#b91c1c';
+        let isPainting = false;
+
+        // Inputs
+        let w1 = 32;
+        let w2 = 7;
+        let temp = 95;
+        let sampleMass = 500;
+
+        // Calculated physics
+        let currentMoisture = 32;
+        let currentClayTemp = 20;
+        let totalWaterEvapGrams = 0;
+        let currentWaterEvapGrams = 0;
+        let drySolidMassGrams = 0;
+        let currentMassGrams = 500;
+        let estimatedTotalTimeMin = 0;
+
+        // Visual textures
+        let chartPoints = [];
+        let crackPatterns = [];
+
+        const canvas = document.getElementById('clayCanvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+
+        const chartCanvas = document.getElementById('miniChartCanvas');
+        const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
+
+        function resizeCanvases() {
+            if (canvas && canvas.parentElement) {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                generateCracks();
+                drawClayVisual();
+            }
+            if (chartCanvas && chartCanvas.parentElement) {
+                const rect = chartCanvas.parentElement.getBoundingClientRect();
+                chartCanvas.width = rect.width;
+                chartCanvas.height = rect.height;
+                drawOfflineChart();
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvases);
+
+        function generateCracks() {
+            crackPatterns = [];
+            for (let i = 0; i < 16; i++) {
+                crackPatterns.push({
+                    x: (Math.random() - 0.5) * 120,
+                    y: (Math.random() - 0.5) * 70,
+                    length: 10 + Math.random() * 20,
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function applyPreset(type) {
+            const btnGok = document.getElementById('presetGokBtn');
+            const btnSchool = document.getElementById('presetSchoolBtn');
+
+            if (type === 'gok') {
+                btnGok.className = "btn-preset active";
+                btnSchool.className = "btn-preset";
+                document.getElementById('inputW1').value = 32;
+                document.getElementById('inputW2').value = 7;
+                document.getElementById('inputTemp').value = 95;
+                document.getElementById('inputMass').value = 500;
+            } else {
+                btnSchool.className = "btn-preset active";
+                btnGok.className = "btn-preset";
+                document.getElementById('inputW1').value = 25;
+                document.getElementById('inputW2').value = 5;
+                document.getElementById('inputTemp').value = 105;
+                document.getElementById('inputMass').value = 250;
+            }
+            onInputChange();
+        }
+
+        function onInputChange() {
+            w1 = parseFloat(document.getElementById('inputW1').value);
+            w2 = parseFloat(document.getElementById('inputW2').value);
+            temp = parseFloat(document.getElementById('inputTemp').value);
+            sampleMass = parseFloat(document.getElementById('inputMass').value);
+
+            if (w2 >= w1) {
+                w2 = w1 - 1;
+                document.getElementById('inputW2').value = w2;
+            }
+
+            document.getElementById('valW1').innerText = w1 + " %";
+            document.getElementById('valW2').innerText = w2 + " %";
+            document.getElementById('valTemp').innerText = temp + " °C";
+            document.getElementById('valMass').innerText = sampleMass + " г";
+
+            if (!isRunning && activeFunScenario !== 'drawing') {
+                calculatePhysics();
+                updateUI();
+                drawClayVisual();
+                resetChart();
+            } else if (activeFunScenario === 'drawing') {
+                calculatePhysics();
+                updateUI();
+                drawClayVisual();
+            }
+        }
+
+        function calculatePhysics() {
+            drySolidMassGrams = sampleMass * (1 - w1 / 100);
+            const targetTotalMass = drySolidMassGrams / (1 - w2 / 100);
+            totalWaterEvapGrams = sampleMass - targetTotalMass;
+
+            let tempFactor = Math.pow(temp / 95, 1.8);
+            let massFactor = Math.pow(500 / sampleMass, 0.4);
+            let rateFactor = 1.35 * tempFactor * massFactor;
+
+            if (activeFunScenario === 'moon') rateFactor *= 20;
+            else if (activeFunScenario === 'sun') rateFactor *= 800;
+            else if (activeFunScenario === 'volcano') rateFactor *= 12;
+            else if (activeFunScenario === 'antarctica') rateFactor *= 0.03;
+            else if (activeFunScenario === 'microwave') rateFactor *= 15;
+            else if (activeFunScenario === 'drawing') rateFactor *= 1;
+
+            estimatedTotalTimeMin = Math.max(0.05, (w1 - w2) / rateFactor);
+
+            if (!isRunning && activeFunScenario !== 'drawing') {
+                currentMoisture = w1;
+                currentMassGrams = sampleMass;
+                currentWaterEvapGrams = 0;
+                currentClayTemp = (activeFunScenario === 'antarctica') ? -20 : (activeFunScenario === 'volcano' ? 350 : 20);
+            }
+        }
+
+        function updateUI() {
+            const mins = Math.floor(simTimeMinutes);
+            const secs = Math.floor((simTimeMinutes - mins) * 60);
+            document.getElementById('mainTimeDisplay').innerHTML = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} <span style="font-size:12px; color:#64748b;">мин</span>`;
+
+            document.getElementById('calcEstimatedTime').innerText = `~${estimatedTotalTimeMin.toFixed(1)} мин`;
+            document.getElementById('statWaterEvaporated').innerText = currentWaterEvapGrams.toFixed(1) + " г";
+            document.getElementById('statCurrentMass').innerText = currentMassGrams.toFixed(1) + " г";
+            document.getElementById('clayTempText').innerText = currentClayTemp.toFixed(1) + " °C";
+
+            let evapSpeed = isRunning && currentMoisture > w2 ? totalWaterEvapGrams / estimatedTotalTimeMin : 0;
+            document.getElementById('clayEvapSpeedText').innerText = evapSpeed.toFixed(1) + " г/мин";
+
+            const stateEl = document.getElementById('clayStateText');
+            if (activeFunScenario === 'drawing') {
+                stateEl.innerText = "Готова к росписи";
+                stateEl.style.color = "#7e22ce";
+            } else if (currentMoisture > 25) {
+                stateEl.innerText = `Влажная (${currentMoisture.toFixed(1)}%)`;
+                stateEl.style.color = "#0284c7";
+            } else if (currentMoisture > 12) {
+                stateEl.innerText = `Подсыхает (${currentMoisture.toFixed(1)}%)`;
+                stateEl.style.color = "#d97706";
+            } else {
+                stateEl.innerText = `Сухая (${currentMoisture.toFixed(1)}%)`;
+                stateEl.style.color = "#10b981";
+            }
+
+            const warningEl = document.getElementById('tempWarning');
+            if (temp > 105 && activeFunScenario !== 'sun' && activeFunScenario !== 'volcano') warningEl.classList.remove('hidden');
+            else warningEl.classList.add('hidden');
+        }
+
+        function resetChart() {
+            chartPoints = [{ t: 0, val: currentMoisture }];
+            drawOfflineChart();
+        }
+
+        function addChartPoint(t, val) {
+            if (chartPoints.length === 0 || t - chartPoints[chartPoints.length - 1].t >= 0.1) {
+                chartPoints.push({ t: t, val: val });
+                drawOfflineChart();
+            }
+        }
+
+        function drawOfflineChart() {
+            if (!chartCtx || !chartCanvas) return;
+            const w = chartCanvas.width;
+            const h = chartCanvas.height;
+            chartCtx.clearRect(0, 0, w, h);
+
+            chartCtx.strokeStyle = "#e2e8f0";
+            chartCtx.lineWidth = 1;
+            const padding = { left: 28, right: 12, top: 10, bottom: 20 };
+
+            for (let i = 0; i <= 4; i++) {
+                const y = padding.top + (i / 4) * (h - padding.top - padding.bottom);
+                chartCtx.beginPath();
+                chartCtx.moveTo(padding.left, y);
+                chartCtx.lineTo(w - padding.right, y);
+                chartCtx.stroke();
+            }
+
+            if (chartPoints.length < 2) return;
+            const maxTime = Math.max(estimatedTotalTimeMin, simTimeMinutes, 1);
+            const maxVal = 45;
+
+            chartCtx.beginPath();
+            chartPoints.forEach((pt, idx) => {
+                const x = padding.left + (pt.t / maxTime) * (w - padding.left - padding.right);
+                const y = (h - padding.bottom) - (pt.val / maxVal) * (h - padding.top - padding.bottom);
+                if (idx === 0) chartCtx.moveTo(x, y);
+                else chartCtx.lineTo(x, y);
+            });
+
+            chartCtx.strokeStyle = "#0284c7";
+            chartCtx.lineWidth = 2.5;
+            chartCtx.stroke();
+        }
+
+        function drawClayVisual() {
+            if (!ctx || !canvas) return;
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+
+            const centerX = width / 2;
+            const centerY = height / 2 + 10;
+            const massScale = 0.7 + (currentMassGrams - 100) / 1900 * 0.6;
+            const ratio = Math.max(0, Math.min(1, (currentMoisture - w2) / (w1 - w2)));
+
+            let r = Math.round(220 * (1 - ratio) + 85 * ratio);
+            let g = Math.round(200 * (1 - ratio) + 68 * ratio);
+            let b = Math.round(170 * (1 - ratio) + 52 * ratio);
+
+            if (activeFunScenario === 'sun') {
+                r = 255; g = 140; b = 0;
+            } else if (activeFunScenario === 'volcano') {
+                r = 100; g = 30; b = 10;
+            } else if (activeFunScenario === 'antarctica') {
+                r = 210; g = 230; b = 245;
+            }
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY + (48 * massScale), 85 * massScale, 14 * massScale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.scale(massScale, massScale);
+
+            const clayGrad = ctx.createRadialGradient(-20, -25, 10, 0, 10, 110);
+            clayGrad.addColorStop(0, `rgb(${Math.min(255, r+40)}, ${Math.min(255, g+40)}, ${Math.min(255, b+40)})`);
+            clayGrad.addColorStop(0.6, `rgb(${r}, ${g}, ${b})`);
+            clayGrad.addColorStop(1, `rgb(${Math.max(0, r-45)}, ${Math.max(0, g-45)}, ${Math.max(0, b-45)})`);
+
+            ctx.fillStyle = clayGrad;
+            ctx.beginPath();
+            ctx.moveTo(-100, 5);
+            ctx.bezierCurveTo(-110, -45, -60, -75, 0, -65);
+            ctx.bezierCurveTo(65, -60, 110, -35, 100, 15);
+            ctx.bezierCurveTo(90, 55, 50, 68, 0, 62);
+            ctx.bezierCurveTo(-60, 58, -105, 45, -100, 5);
+            ctx.closePath();
+            ctx.fill();
+
+            const highlight = ctx.createRadialGradient(-25, -25, 2, -25, -25, 50);
+            highlight.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+            highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = highlight;
+            ctx.beginPath();
+            ctx.arc(-25, -25, 50, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (currentMoisture < 22 || activeFunScenario === 'volcano') {
+                ctx.strokeStyle = activeFunScenario === 'volcano' ? 'rgba(255, 69, 0, 0.8)' : `rgba(35, 20, 10, ${0.4 + (22 - currentMoisture) / 25})`;
+                ctx.lineWidth = activeFunScenario === 'volcano' ? 2 : 1.6;
+                crackPatterns.forEach(c => {
+                    ctx.beginPath();
+                    ctx.moveTo(c.x, c.y);
+                    ctx.lineTo(c.x + Math.cos(c.angle) * c.length * 1.2, c.y + Math.sin(c.angle) * c.length * 1.2);
+                    ctx.stroke();
+                });
+            }
+
+            if (paintedStrokes.length > 0) {
+                ctx.save();
+                paintedStrokes.forEach(stroke => {
+                    ctx.strokeStyle = stroke.color;
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    stroke.points.forEach((pt, idx) => {
+                        if (idx === 0) ctx.moveTo(pt.x, pt.y);
+                        else ctx.lineTo(pt.x, pt.y);
+                    });
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        function getCanvasLocalCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 + 10;
+            const massScale = 0.7 + (currentMassGrams - 100) / 1900 * 0.6;
+
+            return {
+                x: (x - centerX) / massScale,
+                y: (y - centerY) / massScale
+            };
+        }
+
+        if (canvas) {
+            canvas.addEventListener('mousedown', (e) => {
+                if (activeFunScenario !== 'drawing') return;
+                isPainting = true;
+                const coords = getCanvasLocalCoords(e);
+                paintedStrokes.push({ color: currentBrushColor, points: [coords] });
+                drawClayVisual();
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isPainting || activeFunScenario !== 'drawing') return;
+                const coords = getCanvasLocalCoords(e);
+                const currentStroke = paintedStrokes[paintedStrokes.length - 1];
+                if (currentStroke) {
+                    currentStroke.points.push(coords);
+                    drawClayVisual();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                isPainting = false;
+            });
+
+            canvas.addEventListener('touchstart', (e) => {
+                if (activeFunScenario !== 'drawing') return;
+                isPainting = true;
+                const coords = getCanvasLocalCoords(e);
+                paintedStrokes.push({ color: currentBrushColor, points: [coords] });
+                drawClayVisual();
+                e.preventDefault();
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isPainting || activeFunScenario !== 'drawing') return;
+                const coords = getCanvasLocalCoords(e);
+                const currentStroke = paintedStrokes[paintedStrokes.length - 1];
+                if (currentStroke) {
+                    currentStroke.points.push(coords);
+                    drawClayVisual();
+                }
+                e.preventDefault();
+            }, { passive: false });
+
+            window.addEventListener('touchend', () => {
+                isPainting = false;
+            });
+        }
+
+        function setPaintColor(color) {
+            currentBrushColor = color;
+            document.querySelectorAll('.color-dot').forEach(dot => dot.classList.remove('selected'));
+            if (color === '#b91c1c') document.getElementById('colorDotRed').classList.add('selected');
+            else if (color === '#1e40af') document.getElementById('colorDotBlue').classList.add('selected');
+            else if (color === '#15803d') document.getElementById('colorDotGreen').classList.add('selected');
+            else if (color === '#0f172a') document.getElementById('colorDotBlack').classList.add('selected');
+            else if (color === '#ffffff') document.getElementById('colorDotWhite').classList.add('selected');
+        }
+
+        function clearDrawing() {
+            paintedStrokes = [];
+            drawClayVisual();
+        }
+
+        function stepSimulation() {
+            if (!isRunning) return;
+
+            const dtMin = 0.05 * speedMultiplier;
+            simTimeMinutes += dtMin;
+
+            const targetTemp = Math.min(temp, 20 + (temp - 20) * (simTimeMinutes / (estimatedTotalTimeMin * 0.2)));
+            currentClayTemp += (targetTemp - currentClayTemp) * 0.1;
+
+            const rate = (w1 - w2) / estimatedTotalTimeMin;
+            currentMoisture -= rate * dtMin;
+
+            currentMassGrams = drySolidMassGrams / (1 - Math.max(0.01, currentMoisture / 100));
+            currentWaterEvapGrams = sampleMass - currentMassGrams;
+
+            if (currentMoisture <= w2) {
+                currentMoisture = w2;
+                stopSimulation();
+                
+                const mins = Math.floor(simTimeMinutes);
+                const secs = Math.floor((simTimeMinutes - mins) * 60);
+                document.getElementById('finalTimeText').innerText = `${mins} мин ${secs} сек`;
+                document.getElementById('successOverlay').classList.remove('hidden');
+
+                const badge = document.getElementById('statusBadge');
+                badge.innerText = "Завершено";
+                badge.className = "status-badge complete";
+            }
+
+            updateUI();
+            addChartPoint(simTimeMinutes, currentMoisture);
+            drawClayVisual();
+
+            if (isRunning) {
+                animationFrameId = requestAnimationFrame(stepSimulation);
+            }
+        }
+
+        function toggleSimulation() {
+            if (activeFunScenario === 'drawing') return;
+            if (isRunning) stopSimulation();
+            else startSimulation();
+        }
+
+        function startSimulation() {
+            if (currentMoisture <= w2) resetSimulation();
+            isRunning = true;
+            document.getElementById('btnText').innerText = "Пауза";
+            document.getElementById('btnIcon').innerText = "⏸️";
+
+            const badge = document.getElementById('statusBadge');
+            badge.innerText = "Идет сушка...";
+            badge.className = "status-badge active";
+
+            stepSimulation();
+        }
+
+        function stopSimulation() {
+            isRunning = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            document.getElementById('btnText').innerText = "Продолжить сушку";
+            document.getElementById('btnIcon').innerText = "▶️";
+
+            if (currentMoisture > w2) {
+                const badge = document.getElementById('statusBadge');
+                badge.innerText = "Пауза";
+                badge.className = "status-badge";
+            }
+        }
+
+        function resetSimulation() {
+            stopSimulation();
+            document.getElementById('successOverlay').classList.add('hidden');
+            simTimeMinutes = 0;
+            calculatePhysics();
+            resetChart();
+            updateUI();
+            drawClayVisual();
+
+            document.getElementById('btnText').innerText = "Запустить сушку";
+            document.getElementById('btnIcon').innerText = "▶";
+
+            const badge = document.getElementById('statusBadge');
+            badge.innerText = "Готов к запуску";
+            badge.className = "status-badge";
+        }
+
+        function setSpeed(spd) {
+            speedMultiplier = spd;
+            document.getElementById('speedIndicator').innerText = `Скорость: ${spd}x`;
+            document.querySelectorAll('.btn-spd').forEach(btn => {
+                if (btn.innerText === spd + 'x') btn.className = "btn-spd active";
+                else btn.className = "btn-spd";
+            });
+        }
+
+        function openApplicationsModal() { document.getElementById('applicationsModal').classList.remove('hidden'); }
+        function closeApplicationsModal() { document.getElementById('applicationsModal').classList.add('hidden'); }
+        function openFunModal() { document.getElementById('funModal').classList.remove('hidden'); }
+        function closeFunModal() { document.getElementById('funModal').classList.add('hidden'); }
+
+        function selectFunScenario(key) {
+            activeFunScenario = key;
+            closeFunModal();
+            document.getElementById('funScenarioBadge').classList.remove('hidden');
+
+            const viewportBg = document.getElementById('viewportBg');
+            const drawingPalette = document.getElementById('drawingPalette');
+            const clayCanvas = document.getElementById('clayCanvas');
+
+            let titleRu = "Нормальный";
+            if (key === 'moon') {
+                titleRu = "На Луне (Вакуум)";
+                viewportBg.style.background = "radial-gradient(circle, #1e293b 0%, #020617 100%)";
+                drawingPalette.classList.add('hidden');
+                clayCanvas.classList.remove('painting-cursor');
+            } else if (key === 'sun') {
+                titleRu = "Поверхность Солнца";
+                viewportBg.style.background = "radial-gradient(circle, #ea580c 0%, #7c2d12 100%)";
+                drawingPalette.classList.add('hidden');
+                clayCanvas.classList.remove('painting-cursor');
+            } else if (key === 'volcano') {
+                titleRu = "Жерло вулкана";
+                viewportBg.style.background = "radial-gradient(circle, #b91c1c 0%, #450a0a 100%)";
+                drawingPalette.classList.add('hidden');
+                clayCanvas.classList.remove('painting-cursor');
+            } else if (key === 'antarctica') {
+                titleRu = "Антарктида (-89°C)";
+                viewportBg.style.background = "radial-gradient(circle, #38bdf8 0%, #0369a1 100%)";
+                drawingPalette.classList.add('hidden');
+                clayCanvas.classList.remove('painting-cursor');
+            } else if (key === 'microwave') {
+                titleRu = "Супер-СВЧ (10 кВт)";
+                viewportBg.style.background = "radial-gradient(circle, #8b5cf6 0%, #312e81 100%)";
+                drawingPalette.classList.add('hidden');
+                clayCanvas.classList.remove('painting-cursor');
+            } else if (key === 'drawing') {
+                titleRu = "Роспись на глине";
+                viewportBg.style.background = "radial-gradient(circle, #581c87 0%, #2e1065 100%)";
+                drawingPalette.classList.remove('hidden');
+                clayCanvas.classList.add('painting-cursor');
+                currentMoisture = w2;
+                currentMassGrams = drySolidMassGrams / (1 - w2 / 100);
+                currentWaterEvapGrams = sampleMass - currentMassGrams;
+                stopSimulation();
+            }
+
+            document.getElementById('funScenarioTitle').innerText = "Режим: " + titleRu;
+
+            if (key !== 'drawing') {
+                resetSimulation();
+            } else {
+                updateUI();
+                drawClayVisual();
+            }
+        }
+
+        function resetFunScenario() {
+            activeFunScenario = null;
+            document.getElementById('funScenarioBadge').classList.add('hidden');
+            document.getElementById('drawingPalette').classList.add('hidden');
+            document.getElementById('clayCanvas').classList.remove('painting-cursor');
+            document.getElementById('viewportBg').style.background = "linear-gradient(180deg, #0f172a 0%, #1e293b 100%)";
+            resetSimulation();
+        }
+
+        window.onload = function() {
+            resizeCanvases();
+            onInputChange();
+            resetSimulation();
+        };
+    </script>
+</body>
+</html>
